@@ -1,0 +1,357 @@
+<dom-module id="search-banner-plugin">
+	<script>
+		Gerrit.install((plugin, content) => {
+			plugin.registerCustomComponent('banner', 'search-banner-module')
+		})
+	</script>
+</dom-module>
+
+<dom-module id="search-banner-module">
+	<template>
+		<style>
+			.common-bg {
+				background: var(
+					--header-background,
+					var(--header-background-color, rgb(59,120,231))
+				);
+			}
+			.common-input {
+				width: 160px;
+				height: 25px;
+				outline: none;
+				padding-left: 5px;
+				border: 1px solid rgb(221, 221, 221);
+				box-sizing: border-box;
+				/*color: #fff;*/
+				/*background: var(--paper-input-container-shared-input-style_-_background);*/
+			}
+			.submit-btn {
+				width: 60px;
+				height: 25px;
+				border: 1px solid rgb(155, 155, 155);
+				border-radius: 3px;
+				background-color: #ffffff;
+			}
+			.search-container {
+				min-width: 1580px;
+				height: 60px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0px 40px;
+				border-bottom: 1px solid rgb(59,120,231);
+			}
+			.search-container .search-item {
+				min-width: 180px;
+				display: flex;
+				align-items: center;
+				margin-right: 40px;
+			}
+			.search-item .title {
+				margin-right: 5px;
+				color: #fff;
+				font-weight: var(--font-weight-bold);
+				text-align: left;
+				vertical-align: middle;
+			}
+		</style>
+		<nav
+			class="search-container common-bg"
+			style="background-color: rgb(59,120,231)"
+		>
+			<!-- 搜索Status -->
+			<div class="search-item">
+				<label class="title" for="status">Status:</label>
+				<select
+						id="status"
+						class="common-input"
+						on-change="handleStatusChanged"
+				>
+					<template is="dom-repeat" items="[[statusList]]"
+					><option
+							value="{{item.value}}"
+							selected="{{item.selected}}"
+					>
+						{{item.text}}
+					</option></template
+					>
+				</select>
+			</div>
+			<!-- 搜索After -->
+			<div class="search-item">
+				<label class="title" for="after">After:</label>
+				<input
+						id="after"
+						class="common-input"
+						type="date"
+						value="{{after}}"
+						on-change="handleAfterChanged"
+				/>
+			</div>
+			<!-- 搜索Before -->
+			<div class="search-item">
+				<label class="title" for="before">Before:</label>
+				<input
+						id="before"
+						class="common-input"
+						type="date"
+						value="{{before}}"
+						on-change="handleBeforeChanged"
+				/>
+			</div>
+			<!-- 搜索Owner -->
+			<div class="search-item">
+				<label class="title">Owner:</label>
+				<!--				<gr-autocomplete text="{{owner}}"> </gr-autocomplete>-->
+				<input
+						id="owner"
+						class="common-input"
+						type="text"
+						value="{{owner}}"
+						placeholder="eg: fanwj@ktc.cn"
+						on-change="handleOwnerChanged"
+				/>
+			</div>
+			<!-- 搜索Projects -->
+			<div class="search-item">
+				<label class="title">Projects:</label>
+				<!--				<gr-autocomplete text="{{projects}}"> </gr-autocomplete>-->
+				<input
+						id="projects"
+						class="common-input"
+						type="text"
+						value="{{projects}}"
+						placeholder="eg: 1000_9950_First_Test"
+						on-change="handleProjectsChanged"
+				/>
+			</div>
+			<!-- 搜索Reviewer -->
+			<div class="search-item">
+				<label class="title">Reviewer:</label>
+				<!--				<gr-autocomplete text="{{reviewer}}"> </gr-autocomplete>-->
+				<input
+						id="reviewer"
+						class="common-input"
+						type="text"
+						value="{{reviewer}}"
+						placeholder="eg: fanwj@ktc.cn"
+						on-change="handleReviewerChanged"
+				/>
+			</div>
+			<!-- 查询&重置 -->
+			<input
+					class="submit-btn"
+					type="submit"
+					value="Search"
+					on-click="handleSearch"
+			/>
+			<input
+					class="submit-btn"
+					type="submit"
+					value="Reset"
+					on-click="handleReset"
+					style="margin-left: 5px"
+			/>
+			<input
+					class="submit-btn"
+					type="submit"
+					value="Export"
+					on-click="handleExport"
+					style="margin-left: 5px"
+			/>
+
+		</nav>
+	</template>
+	<script>
+		class SearchBanner extends Polymer.Element {
+			static get is() {
+				return 'search-banner-module'
+			}
+			static get properties() {
+				return {
+					// 状态
+					status: {
+						type: String,
+						value: 'open',
+					},
+					// 状态下拉列表
+					statusList: {
+						type: Array,
+						value: [
+							{ text: 'open', value: 'open', selected: '' },
+							{ text: 'closed', value: 'closed', selected: '' },
+							{ text: 'merged', value: 'merged', selected: '' },
+							{
+								text: 'abandoned',
+								value: 'abandoned',
+								selected: '',
+							},
+							{
+								text: 'reviewed',
+								value: 'reviewed',
+								selected: '',
+							},
+							{
+								text: 'pending',
+								value: 'pending',
+								selected: '',
+							},
+							{
+								text: 'new',
+								value: 'new',
+								selected: '',
+							},
+						],
+					},
+					// 日期限制-开始时间
+					after: {
+						type: String,
+						value: '',
+					},
+					// 日期限制-结束时间
+					before: {
+						type: String,
+						value: '',
+					},
+					// 账号
+					owner: {
+						type: String,
+						value: '',
+					},
+					// 项目
+					projects: {
+						type: String,
+						value: '',
+					},
+					// Reviewer
+					reviewer: {
+						type: String,
+						value: '',
+					},
+				}
+			}
+			constructor() {
+				super()
+				this.init()
+			}
+			// 初始化参数
+			init() {
+				// 解析参数/q/
+				const url = decodeURI(window.location.href)
+				const index = url.indexOf('/q/')
+				if (index != -1) {
+					let args = url.substring(index + 3)
+					// 分割参数
+					let argMap = {}
+					let split = args.split('+')
+					for (let item of split) {
+						const kv = item.split(':')
+						argMap[kv[0]] = kv[1]
+					}
+					// 处理status
+					this.set(
+						'status',
+						argMap['status'] ? argMap['status'] : 'open'
+					)
+					// 处理statusList选中状态
+					let statusList = Object.assign([], this.statusList)
+					for (let item of statusList) {
+						item.selected =
+							item.value === this.status ? 'selected' : ''
+					}
+					this.set('statusList', statusList)
+					// 处理after
+					this.set('after', argMap['after'])
+					// 处理before
+					this.set('before', argMap['before'])
+					// 处理owner
+					this.set('owner', argMap['owner'])
+					// 处理projects
+					this.set('projects', argMap['projects'])
+					// 处理reviewer
+					this.set('reviewer', argMap['reviewer'])
+				}
+			}
+			// status状态改变
+			handleStatusChanged(e) {
+				this.set('status', e.target.value)
+			}
+			// after状态改变
+			handleAfterChanged(e) {
+				this.set('after', e.target.value)
+			}
+			// before状态改变
+			handleBeforeChanged(e) {
+				this.set('before', e.target.value)
+			}
+			handleOwnerChanged(e) {
+				this.set('owner', e.target.value)
+			}
+			handleProjectsChanged(e){
+				this.set('projects', e.target.value)
+			}
+			handleReviewerChanged(e){
+				this.set('reviewer', e.target.value)
+			}
+			// 处理查询
+			handleSearch() {
+				const baseUrl = `${window.location.protocol}//${window.location.host}/q/`
+				window.location.href = baseUrl + this.combineArgs()
+			}
+			// 合并参数
+			combineArgs() {
+				let args = ''
+				if (this.status) args += `status:${this.status}+`
+				if (this.after) args += `after:${this.after}+`
+				if (this.before) args += `before:${this.before}+`
+				if (this.owner) args += `owner:${this.owner}+`
+				if (this.projects) args += `projects:${this.projects}+`
+				if (this.reviewer) args += `reviewer:${this.reviewer}+`
+				return args.slice(0, -1)
+			}
+			// 处理重置按钮
+			handleReset() {
+				const baseUrl = `${window.location.protocol}//${window.location.host}/q/`
+				window.location.href = baseUrl + 'status:open'
+			}
+
+			// 创建Xhr对象
+			createXHR() {
+				var XHR = [
+					//兼容不同浏览器和版本得创建函数数组
+					function () {
+						return new XMLHttpRequest()
+					},
+					function () {
+						return new ActiveXObject('Msxml2.XMLHTTP')
+					},
+					function () {
+						return new ActiveXObject('Msxml3.XMLHTTP')
+					},
+					function () {
+						return new ActiveXObject('Microsoft.XMLHTTP')
+					},
+				]
+				var xhr = null
+				//尝试调用函数，如果成功则返回XMLHttpRequest对象，否则继续尝试
+				for (var i = 0; i < XHR.length; i++) {
+					try {
+						xhr = XHR[i]()
+					} catch (e) {
+						continue //如果发生异常，则继续下一个函数调用
+					}
+					break //如果成功，则中止循环
+				}
+				return xhr //返回对象实例
+			}
+			// 获取列表数据
+			handleExport() {
+				const url = `${window.location.protocol}//${
+					window.location.host
+				}/plugins/example-servlet/export/?q=${this.combineArgs()}`
+				window.location.href = url
+			}
+		}
+		customElements.define(SearchBanner.is, SearchBanner)
+	</script>
+</dom-module>
