@@ -162,6 +162,7 @@
 
 		</nav>
 	</template>
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
 	<script>
 		class SearchBanner extends Polymer.Element {
 			static get is() {
@@ -346,10 +347,56 @@
 			}
 			// 获取列表数据
 			handleExport() {
-				const url = `${window.location.protocol}//${
-					window.location.host
-				}/plugins/example-servlet/export/?q=${this.combineArgs()}`
-				window.location.href = url
+				const url = decodeURI(window.location.href)
+				const index = url.indexOf('/q/')
+				if (index !== -1) {
+					let args = url.substring(index + 3)
+					const path = `${window.location.protocol}//${
+						window.location.host
+					}/plugins/example-servlet/`
+					//window.location.href = url
+					console.log(path);
+					$.ajax({
+						url: path + "beforeExport/",    //请求的url地址
+						dataType: "json",   //返回格式为json
+						async: true,//请求是否异步，默认为异步，这也是ajax重要特性
+						data: {"q": args},    //参数值
+						type: "GET",   //请求方式
+						beforeSend: function () {
+							//请求前的处理
+							console.log("beforeSend");
+						},
+						success: function (req) {
+							//返回值是json格式因此需要加上想调取的信息的key值
+							console.log(req);
+							if(req.code === 200) {
+								console.log(path,args)
+								window.location.href = path  + "export/"+ "?q=" + args;
+							}
+							else if(req.code === 401) {
+								alert("未登录，请先登录");
+							}
+							else if(req.code === 502){
+								alert("服务端错误");
+							}
+							else if(req.code === 504){
+								alert("数据为空，导出失败");
+							}
+							//请求成功时处理
+						},
+						complete: function () {
+							//请求完成的处理
+							console.log("complete");
+						},
+						error: function (err) {
+							console.log("error", err);
+							//请求出错处理
+						}
+					});
+				}
+				else {
+					alert("当前页面不允许导出,请进入Gerrit列表");
+				}
 			}
 		}
 		customElements.define(SearchBanner.is, SearchBanner)
