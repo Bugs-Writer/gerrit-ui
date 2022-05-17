@@ -1,5 +1,7 @@
 <dom-module id="search-banner-plugin">
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
 	<script>
+
 		Gerrit.install((plugin, content) => {
 			plugin.registerCustomComponent('banner', 'search-banner-module')
 		})
@@ -10,10 +12,7 @@
 	<template>
 		<style>
 			.common-bg {
-				background: var(
-					--header-background,
-					var(--header-background-color, rgb(59,120,231))
-				);
+				background:rgb(59,120,231);
 			}
 			.common-input {
 				width: 160px;
@@ -54,10 +53,12 @@
 				text-align: left;
 				vertical-align: middle;
 			}
+			.nav-head0 {
+				display: none;
+			}
 		</style>
 		<nav
-			class="search-container common-bg"
-			style="background-color: rgb(59,120,231)"
+			class$="search-container common-bg nav-head{{display}}"
 		>
 			<!-- 搜索Status -->
 			<div class="search-item">
@@ -67,14 +68,14 @@
 						class="common-input"
 						on-change="handleStatusChanged"
 				>
-					<template is="dom-repeat" items="[[statusList]]"
-					><option
+					<template is="dom-repeat" items="{{statusList}}">
+						<option
 							value="{{item.value}}"
 							selected="{{item.selected}}"
-					>
-						{{item.text}}
-					</option></template
-					>
+						>
+							{{item.text}}
+						</option>
+					</template>
 				</select>
 			</div>
 			<!-- 搜索After -->
@@ -162,6 +163,7 @@
 
 		</nav>
 	</template>
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
 	<script>
 		class SearchBanner extends Polymer.Element {
 			static get is() {
@@ -169,6 +171,14 @@
 			}
 			static get properties() {
 				return {
+					timer: {
+						type: Number,
+						value: null,
+					},
+					display: {
+						type: Number,
+						value: 0,
+					},
 					// 状态
 					status: {
 						type: String,
@@ -228,49 +238,140 @@
 						type: String,
 						value: '',
 					},
+					// fullName: {
+					// 	type: String,
+					// 	// when `first` or `last` changes `computeFullName` is called once
+					// 	// and the value it returns is stored as `fullName`
+					// 	computed: 'computeFullName()',
+					// },
+					href: {
+						type: String,
+					}
 				}
 			}
 			constructor() {
 				super()
+				const self = this
 				this.init()
+				this.href = window.location.href
+				this.timer && clearInterval(this.timer);
+				this.timer = setInterval(function () {
+					if(self.href !== window.location.href) {
+						self.href = window.location.href
+						self.init()
+					}
+				},200);
+
 			}
+			// computeFullName(){
+			// 	return window.location.href
+			// }
+			// nameChanged(newVal){
+			// 	//this.init()
+			// }
 			// 初始化参数
 			init() {
+				// this.display = 0;
+				this.set('display', 0)
 				// 解析参数/q/
 				const url = decodeURI(window.location.href)
 				const index = url.indexOf('/q/')
-				if (index != -1) {
-					let args = url.substring(index + 3)
-					// 分割参数
-					let argMap = {}
-					let split = args.split('+')
-					for (let item of split) {
-						const kv = item.split(':')
-						argMap[kv[0]] = kv[1]
-					}
-					// 处理status
-					this.set(
+				const param_index = url.indexOf('?')
+				const params = url.split('?');
+				if(params.length > 1 && params[1] === "type=search"){
+					const path = `${window.location.protocol}//${
+							window.location.host
+					}/plugins/example-servlet/`
+					const self = this;
+					$.ajax({
+						url: path + "validLogin/",    //请求的url地址
+						dataType: "json",   //返回格式为json
+						async: true,//请求是否异步，默认为异步，这也是ajax重要特性
+						data: {},    //参数值
+						type: "GET",   //请求方式
+						beforeSend: function () {
+							//请求前的处理
+							console.log("beforeSend");
+						},
+						success: function (req) {
+							//返回值是json格式因此需要加上想调取的信息的key值
+							console.log(req);
+							if(req.code === 200) {
+								console.log("成功")
+								//this.customStyle['--nav-head-display'] = '';
+								//this.setAttribute("style", "--nav-head-display: block");
+								//element.style.setProperty('display', '')
+								//self.style["--nav-head-display"] = "";
+								//document.body.style.setProperty("--nav-head-display","");
+								if (index !== -1) {
+									let args = url.substring(index + 3, param_index)
+									// console.log(args)
+									self.setParams(args)
+								}
+							}
+							else {
+								alert("ddd")
+								window.location.href = `${window.location.protocol}//${
+										window.location.host
+								}/q/status:open`;
+							}
+							//请求成功时处理
+						},
+						complete: function () {
+							//请求完成的处理
+							console.log("complete");
+							console.log(self.statusList)
+						},
+						error: function (err) {
+							console.log("error", err);
+							//请求出错处理
+						}
+					});
+				}
+			}
+			setParams(args){
+				// 分割参数
+				let argMap = {}
+				let split = args.split('+')
+				for (let item of split) {
+					const kv = item.split(':')
+					argMap[kv[0]] = kv[1]
+				}
+				// 处理status
+				this.set(
 						'status',
 						argMap['status'] ? argMap['status'] : 'open'
-					)
-					// 处理statusList选中状态
-					let statusList = Object.assign([], this.statusList)
-					for (let item of statusList) {
-						item.selected =
-							item.value === this.status ? 'selected' : ''
+				)
+				// 处理statusList选中状态
+				// let statusList = Object.assign([], this.statusList)
+				// for (let item of statusList) {
+				// 	item.selected = item.value === this.status ? 'selected' : ''
+				// }
+
+				for (let i = 0; i < this.statusList.length; i++) {
+					let item = this.statusList[i]
+					if(item.value === this.status){
+						//this.set('item.selected', item.value === this.status ? 'selected' : '');
+						item.selected = item.value === this.status ? 'selected' : ''
+						this.splice('statusList', i, 1)
+						this.push('statusList', item)
+						break
 					}
-					this.set('statusList', statusList)
-					// 处理after
-					this.set('after', argMap['after'])
-					// 处理before
-					this.set('before', argMap['before'])
-					// 处理owner
-					this.set('owner', argMap['owner'])
-					// 处理projects
-					this.set('projects', argMap['projects'])
-					// 处理reviewer
-					this.set('reviewer', argMap['reviewer'])
 				}
+				// this.set('statusList', statusList)
+				// 处理after
+				this.set('after', argMap['after'])
+				// 处理before
+				this.set('before', argMap['before'])
+				// 处理owner
+				this.set('owner', argMap['owner'])
+				// 处理projects
+				this.set('projects', argMap['projects'])
+				// 处理reviewer
+				this.set('reviewer', argMap['reviewer'])
+
+				this.set('display', 1)
+				// console.log(this.statusList)
 			}
 			// status状态改变
 			handleStatusChanged(e) {
@@ -296,7 +397,7 @@
 			// 处理查询
 			handleSearch() {
 				const baseUrl = `${window.location.protocol}//${window.location.host}/q/`
-				window.location.href = baseUrl + this.combineArgs()
+				window.location.href = baseUrl + this.combineArgs() + "?type=search"
 			}
 			// 合并参数
 			combineArgs() {
@@ -312,7 +413,7 @@
 			// 处理重置按钮
 			handleReset() {
 				const baseUrl = `${window.location.protocol}//${window.location.host}/q/`
-				window.location.href = baseUrl + 'status:open'
+				window.location.href = baseUrl + 'status:open?type=search'
 			}
 
 			// 创建Xhr对象
@@ -346,10 +447,57 @@
 			}
 			// 获取列表数据
 			handleExport() {
-				const url = `${window.location.protocol}//${
-					window.location.host
-				}/plugins/example-servlet/export/?q=${this.combineArgs()}`
-				window.location.href = url
+				const url = decodeURI(window.location.href)
+				const index = url.indexOf('/q/')
+				if (index !== -1) {
+					//let args = url.substring(index + 3)
+					let args = this.combineArgs();
+					const path = `${window.location.protocol}//${
+						window.location.host
+					}/plugins/example-servlet/`
+					//window.location.href = url
+					console.log(path);
+					$.ajax({
+						url: path + "beforeExport/",    //请求的url地址
+						dataType: "json",   //返回格式为json
+						async: true,//请求是否异步，默认为异步，这也是ajax重要特性
+						data: {"q": args},    //参数值
+						type: "GET",   //请求方式
+						beforeSend: function () {
+							//请求前的处理
+							console.log("beforeSend");
+						},
+						success: function (req) {
+							//返回值是json格式因此需要加上想调取的信息的key值
+							console.log(req);
+							if(req.code === 200) {
+								console.log(path,args)
+								window.location.href = path  + "export/"+ "?q=" + args;
+							}
+							else if(req.code === 401) {
+								alert("未登录，请先登录");
+							}
+							else if(req.code === 502){
+								alert("服务端错误");
+							}
+							else if(req.code === 504){
+								alert("数据为空，导出失败");
+							}
+							//请求成功时处理
+						},
+						complete: function () {
+							//请求完成的处理
+							console.log("complete");
+						},
+						error: function (err) {
+							console.log("error", err);
+							//请求出错处理
+						}
+					});
+				}
+				else {
+					alert("当前页面不允许导出,请进入Gerrit列表");
+				}
 			}
 		}
 		customElements.define(SearchBanner.is, SearchBanner)
