@@ -20,7 +20,7 @@
 
 			.common-input {
 				width: 160px;
-				height: 25px;
+				height: 26px;
 				outline: none;
 				padding-left: 5px;
 				border: 1px solid rgb(221, 221, 221);
@@ -31,7 +31,7 @@
 
 			.submit-btn {
 				width: 60px;
-				height: 25px;
+				height: 26px;
 				border: 1px solid rgb(155, 155, 155);
 				border-radius: 3px;
 				background-color: #ffffff;
@@ -481,6 +481,10 @@
 			// 获取建议
 			fetchOwnerSgt(query) {
 				this.set('owner', query)
+				if (query == '') {
+					self.set('ownerSgt', [])
+					return
+				}
 				// by ajax
 				const self = this
 				const path = `${window.location.protocol}//${window.location.host}/plugins/example-servlet`
@@ -510,6 +514,10 @@
 
 			fetchReviewerSgt(query) {
 				this.set('reviewer', query)
+				if (query == '') {
+					self.set('reviewerSgt', [])
+					return
+				}
 				// by ajax
 				const self = this
 				const path = `${window.location.protocol}//${window.location.host}/plugins/example-servlet`
@@ -539,6 +547,10 @@
 
 			fetchProjectSgt(query) {
 				this.set('project', query)
+				if (query == '') {
+					self.set('projectSgt', [])
+					return
+				}
 				// by ajax
 				const self = this
 				const path = `${window.location.protocol}//${window.location.host}/plugins/example-servlet`
@@ -688,7 +700,7 @@
 				font-size: 14px;
 				color: rgb(33, 33, 33);
 				border: 1px solid rgb(221, 221, 221);
-				border-radius: 4px;
+				/* border-radius: 4px; */
 				box-sizing: border-box;
 			}
 
