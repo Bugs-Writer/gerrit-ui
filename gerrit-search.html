@@ -3,21 +3,17 @@
 	<script>
 		Gerrit.install((plugin, content) => {
 			plugin.registerCustomComponent('banner', 'search-banner-module')
-			plugin.registerCustomComponent(
-				'header-small-banner',
-				'searchable-input'
-			)
 		})
 	</script>
 </dom-module>
 
+<!-- 搜索栏 -->
 <dom-module id="search-banner-module">
 	<template>
 		<style>
 			.common-bg {
 				background: rgb(59, 120, 231);
 			}
-
 			.common-input {
 				width: 160px;
 				height: 26px;
@@ -28,7 +24,6 @@
 				/*color: #fff;*/
 				/*background: var(--paper-input-container-shared-input-style_-_background);*/
 			}
-
 			.submit-btn {
 				width: 60px;
 				height: 26px;
@@ -36,7 +31,6 @@
 				border-radius: 3px;
 				background-color: #ffffff;
 			}
-
 			.search-container {
 				min-width: 1580px;
 				height: 60px;
@@ -46,14 +40,12 @@
 				padding: 0px 40px;
 				border-bottom: 1px solid rgb(59, 120, 231);
 			}
-
 			.search-container .search-item {
 				min-width: 180px;
 				display: flex;
 				align-items: center;
 				margin-right: 40px;
 			}
-
 			.search-item .title {
 				margin-right: 5px;
 				color: #fff;
@@ -61,9 +53,15 @@
 				text-align: left;
 				vertical-align: middle;
 			}
-
 			.nav-head0 {
 				display: none;
+			}
+			/*select下拉框美化样式*/
+			#status {
+				appearance: none;
+				-moz-appearance: none;
+				-webkit-appearance: none;
+				font-size: 14px;
 			}
 		</style>
 		<nav class$="search-container common-bg nav-head{{display}}">
@@ -417,11 +415,14 @@
 				// 处理before
 				this.set('before', argMap['before'])
 				// 处理owner
-				this.set('owner', argMap['owner'])
+				this.setInputValue('owner', argMap['owner'])
+				// this.set('owner', argMap['owner'])
 				// 处理projects
-				this.set('projects', argMap['projects'])
+				this.setInputValue('project', argMap['projects'])
+				// this.set('projects', argMap['projects'])
 				// 处理reviewer
-				this.set('reviewer', argMap['reviewer'])
+				this.setInputValue('reviewer', argMap['reviewer'])
+				// this.set('reviewer', argMap['reviewer'])
 
 				this.set('display', 1)
 			}
@@ -466,9 +467,12 @@
 				if (this.status) args += `status:${this.status}+`
 				if (this.after) args += `after:${this.after}+`
 				if (this.before) args += `before:${this.before}+`
-				if (this.owner) args += `owner:${this.owner}+`
-				if (this.projects) args += `projects:${this.projects}+`
-				if (this.reviewer) args += `reviewer:${this.reviewer}+`
+				const owner = this.getInputValue('owner')
+				const projects = this.getInputValue('project')
+				const reviewer = this.getInputValue('reviewer')
+				if (owner) args += `owner:${owner}+`
+				if (projects) args += `projects:${projects}+`
+				if (reviewer) args += `reviewer:${reviewer}+`
 				return args.slice(0, -1)
 			}
 
@@ -480,7 +484,7 @@
 
 			// 获取建议
 			fetchOwnerSgt(query) {
-				this.set('owner', query)
+				// this.set('owner', query)
 				if (query == '') {
 					this.set('ownerSgt', [])
 					return
@@ -513,7 +517,7 @@
 			}
 
 			fetchReviewerSgt(query) {
-				this.set('reviewer', query)
+				// this.set('reviewer', query)
 				if (query == '') {
 					this.set('reviewerSgt', [])
 					return
@@ -546,7 +550,7 @@
 			}
 
 			fetchProjectSgt(query) {
-				this.set('project', query)
+				// this.set('project', query)
 				if (query == '') {
 					this.set('projectSgt', [])
 					return
@@ -574,6 +578,16 @@
 						}
 					},
 				})
+			}
+			/*设定输入框组件的值*/
+			setInputValue(predicate, value) {
+				const input = this.shadowRoot.querySelector('#' + predicate)
+				input.search = value
+			}
+			/*获取输入框组件的值*/
+			getInputValue(predicate) {
+				const input = this.shadowRoot.querySelector('#' + predicate)
+				return input.search
 			}
 
 			// 创建Xhr对象
@@ -661,6 +675,7 @@
 	</script>
 </dom-module>
 
+<!-- 可下拉输入框组件 -->
 <dom-module id="searchable-input">
 	<template>
 		<style>
@@ -848,6 +863,7 @@
 			}
 			// 处理输入框内容改变事件
 			_onInputChange(e) {
+				console.log('onInputChange:', e.target.value)
 				this.set('search', e.target.value)
 			}
 			// 计算是否被选中
@@ -893,6 +909,10 @@
 					case 13: // Enter
 					case 9: // tab
 						e.preventDefault()
+						console.log(
+							'enter/tab',
+							this.suggestions[this.cursor].label
+						)
 						this.set('search', this.suggestions[this.cursor].label)
 						this.hiddenSgt()
 						break
