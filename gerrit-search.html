@@ -301,16 +301,6 @@
 				this.href = window.location.href
 				this.timer && clearInterval(this.timer)
 				this.timer = setInterval(function () {
-					if (window.location.href.indexOf('logout') != -1) {
-						sessionStorage.removeItem(this.SESSION_KEY)
-						console.log(
-							window.location.href +
-								':' +
-								'移除session' +
-								sessionStorage.removeItem(this.SESSION_KEY)
-						)
-						return
-					}
 					if (self.href !== window.location.href) {
 						self.href = window.location.href
 						self.init()
@@ -351,7 +341,6 @@
 
 			disconnectedCallback() {
 				super.disconnetedCallback()
-				// this.removeEventListener('click', this.myFunction);
 			}
 
 			// 初始化参数
@@ -364,9 +353,6 @@
 				// 如果包含type=search参数
 				if (params.length > 1 && params[1] === 'type=search') {
 					sessionStorage.setItem(this.SESSION_KEY, this.STATUS_SHOW)
-					// history.replaceState(null, null, params[0]) // 不会闪一下，但是刷新会导致search-bar重新显示。。。。。
-					// history.back() // 会回到之前的页面，但是会闪一下
-					// window.location.href = params[0]	// 跳转两次 体验不佳 但是可以解决search-bar手动关闭后，刷新页面显示search-bar的问题
 				}
 				if (
 					sessionStorage.getItem(this.SESSION_KEY) == this.STATUS_SHOW
@@ -380,15 +366,11 @@
 						async: true, //请求是否异步，默认为异步，这也是ajax重要特性
 						data: {}, //参数值
 						type: 'GET', //请求方式
-						beforeSend: function () {
-							//请求前的处理
-							console.log('beforeSend')
-						},
 						success: function (req) {
 							//返回值是json格式因此需要加上想调取的信息的key值
-							console.log(req)
+							// console.log(req)
 							if (req.code === 200) {
-								console.log('成功')
+								// console.log('成功')
 								if (index !== -1) {
 									let args
 									if (param_index != -1) {
@@ -403,16 +385,15 @@
 								}
 								self.showNav()
 							} else if (req.code === 401) {
-								// window.location.href = `${window.location.protocol}//${window.location.host}/q/status:open`
-								sessionStorage.removeItem(this.SESSION_KEY)
+								sessionStorage.removeItem(self.SESSION_KEY)
 								self.timer && clearInterval(self.timer)
 							}
 							//请求成功时处理
 						},
 						complete: function () {
 							//请求完成的处理
-							console.log('complete')
-							console.log(self.statusList)
+							// console.log('complete')
+							// console.log(self.statusList)
 						},
 						error: function (err) {
 							console.log('error', err)
@@ -539,7 +520,7 @@
 					data: { q: query }, //参数值
 					type: 'GET', //请求方式
 					success: function (res) {
-						console.log(res)
+						// console.log(res)
 						if (res.code === 200) {
 							self.set('ownerSgt', [])
 							const ownerSgt = res.data.map((account) => {
@@ -572,7 +553,7 @@
 					data: { q: query }, //参数值
 					type: 'GET', //请求方式
 					success: function (res) {
-						console.log(res)
+						// console.log(res)
 						if (res.code === 200) {
 							self.set('reviewerSgt', [])
 							const reviewerSgt = res.data.map((account) => {
@@ -605,7 +586,7 @@
 					data: { q: query }, //参数值
 					type: 'GET', //请求方式
 					success: function (res) {
-						console.log(res)
+						// console.log(res)
 						if (res.code === 200) {
 							self.set('projectSgt', [])
 							const projectSgt = res.data.map((project) => {
@@ -670,20 +651,16 @@
 					let args = this.combineArgs()
 					const path = `${window.location.protocol}//${window.location.host}/plugins/example-servlet/`
 					//window.location.href = url
-					console.log(path)
+					// console.log(path)
 					$.ajax({
 						url: path + 'beforeExport/', //请求的url地址
 						dataType: 'json', //返回格式为json
 						async: true, //请求是否异步，默认为异步，这也是ajax重要特性
 						data: { q: args }, //参数值
 						type: 'GET', //请求方式
-						beforeSend: function () {
-							//请求前的处理
-							console.log('beforeSend')
-						},
 						success: function (req) {
 							//返回值是json格式因此需要加上想调取的信息的key值
-							console.log(req)
+							// console.log(req)
 							if (req.code === 200) {
 								console.log(path, args)
 								window.location.href =
@@ -699,7 +676,7 @@
 						},
 						complete: function () {
 							//请求完成的处理
-							console.log('complete')
+							// console.log('complete')
 						},
 						error: function (err) {
 							console.log('error', err)
@@ -887,7 +864,6 @@
 				)
 				document.onclick = function () {
 					self.hiddenSgt()
-					console.log(self.listener + ' hiddenSgt')
 					document.onclick = null
 				}
 			}
@@ -902,7 +878,6 @@
 			}
 			// 处理输入框内容改变事件
 			_onInputChange(e) {
-				console.log('onInputChange:', e.target.value)
 				this.set('search', e.target.value)
 			}
 			// 计算是否被选中
@@ -948,10 +923,6 @@
 					case 13: // Enter
 					case 9: // tab
 						e.preventDefault()
-						console.log(
-							'enter/tab',
-							this.suggestions[this.cursor].label
-						)
 						this.set('search', this.suggestions[this.cursor].label)
 						this.hiddenSgt()
 						break
