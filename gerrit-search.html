@@ -301,6 +301,9 @@
 				this.href = window.location.href
 				this.timer && clearInterval(this.timer)
 				this.timer = setInterval(function () {
+					if (window.location.href.indexOf('logout') != -1) {
+						sessionStorage.removeItem(this.SESSION_KEY)
+					}
 					if (self.href !== window.location.href) {
 						self.href = window.location.href
 						self.init()
@@ -393,7 +396,7 @@
 								}
 								self.showNav()
 							} else {
-								window.location.href = `${window.location.protocol}//${window.location.host}/q/status:open`
+								// window.location.href = `${window.location.protocol}//${window.location.host}/q/status:open`
 							}
 							//请求成功时处理
 						},
