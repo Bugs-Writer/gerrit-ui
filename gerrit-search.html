@@ -301,6 +301,16 @@
 				this.href = window.location.href
 				this.timer && clearInterval(this.timer)
 				this.timer = setInterval(function () {
+					if (window.location.href.indexOf('logout') != -1) {
+						sessionStorage.removeItem(this.SESSION_KEY)
+						console.log(
+							window.location.href +
+								':' +
+								'移除session' +
+								sessionStorage.removeItem(this.SESSION_KEY)
+						)
+						return
+					}
 					if (self.href !== window.location.href) {
 						self.href = window.location.href
 						self.init()
