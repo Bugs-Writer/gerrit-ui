@@ -392,8 +392,10 @@
 									self.setParams(args)
 								}
 								self.showNav()
-							} else {
+							} else if (req.code === 401) {
 								// window.location.href = `${window.location.protocol}//${window.location.host}/q/status:open`
+								sessionStorage.removeItem(this.SESSION_KEY)
+								self.timer && clearInterval(self.timer)
 							}
 							//请求成功时处理
 						},
