@@ -662,9 +662,11 @@
 							//返回值是json格式因此需要加上想调取的信息的key值
 							// console.log(req)
 							if (req.code === 200) {
-								console.log(path, args)
 								window.location.href =
-									path + 'export/' + '?q=' + args
+									path +
+									'export/' +
+									'?q=' +
+									encodeURIComponent(args)
 							} else if (req.code === 401) {
 								alert('未登录，请先登录')
 							} else if (req.code === 502) {
